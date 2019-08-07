@@ -39,11 +39,39 @@ function replaceCenterDomBy(dom) {
 
 	return mainNode;
 }
-
+function getQueryStringValue(key) {
+	return decodeURIComponent(
+		window.location.search.replace(
+			new RegExp(
+				'^(?:.*[&\\?]' + encodeURIComponent(key).replace(/[\.\+\*]/g, '\\$&') + '(?:\\=([^&]*))?)?.*$',
+				'i'
+			),
+			'$1'
+		)
+	);
+}
 export const openRoom = function(type, name) {
+	let autoLogin = getQueryStringValue('autoLogin');
+	if (autoLogin) {
+		let loginToken = getQueryStringValue('loginToken');
+		console.log('loginToken', loginToken);
+
+		if (loginToken) {
+			Meteor.loginWithToken(loginToken, (error) => {
+				console.log('login with token error', error);
+			});
+		}
+	}
+	_openRoom(type, name);
+};
+function _openRoom(type, name) {
 	window.currentTracker = Tracker.autorun(function(c) {
 		const user = Meteor.user();
-		if ((user && user.username == null) || (user == null && settings.get('Accounts_AllowAnonymousRead') === false)) {
+		console.log('user--', user);
+		if (
+			(user && user.username == null) ||
+			(user == null && settings.get('Accounts_AllowAnonymousRead') === false)
+		) {
 			BlazeLayout.render('main');
 			return;
 		}
@@ -116,4 +144,4 @@ export const openRoom = function(type, name) {
 
 		return callbacks.run('enter-room', sub);
 	});
-};
+}
